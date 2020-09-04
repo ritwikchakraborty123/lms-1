@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 include 'db_config.php';
 //session_start();
@@ -811,7 +811,9 @@ echo' 	</b><br><a href="course.php">Completed courses</a></h2>
 <i class="fas fa-award" style="float:left;width:40px;height:80px;margin:30px 20px 20px 0px;font-size:36px; color: black;"></i>
 <i class="fas fa-award" style="float:left;width:40px;height:40px;margin:30px 20px 20px 0px;font-size:36px; color: black;"></i>
 <h2 style="color: black;"><b style="font-size:20px;">BADGES(2)</b><br>Your latest achievements</h2>
-      <input class="buttonm" type="button" value="VIEW ALL"onclick="alert(\'Do you want to view all badges\')">
+        <a href ="badges.php" >
+              <input class="buttonm" type="button" value="VIEW ALL"onclick="alert(\'Do you want to view all badges\')">
+        </a>
 </div>
 
     </div>
