@@ -29,7 +29,7 @@ echo'
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
-
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
 		<style>
 
 			/* Style the list */
@@ -182,7 +182,7 @@ echo'</strong></span><br></h4>
 
 <div class="w3-bar-block">
     <a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>  Close Menu</a>
-    <h4 style="font-size: 17px;background-color: #1d3056;color: #FFFFFF;"><a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-pie-chart"></i>  Dashboard</a></h4>
+    <h4 style="font-size: 17px;background-color: #1d3056;color: #FFFFFF;"><a href="admin.php" class="w3-bar-item w3-button w3-padding"><i class="fa fa-pie-chart"></i>  Dashboard</a></h4>
     <h4 style="font-size: 17px;"><a href="admin-account.php" class="w3-bar-item w3-button w3-padding"><i class="fa fa-user fa-fw"></i>  Account</a></h4>
    <h4 style="font-size: 17px;"><a href="report.php" class="w3-bar-item w3-button w3-padding"><i class="fa fa-pie-chart"></i>  Analytics</a></h4>
    <h4 style="font-size: 17px;"> <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-comments"></i>  Messages</a></h4>
@@ -220,60 +220,262 @@ echo '
 					box-shadow: 7px 15px 104px -20px rgba(0,0,0,0.75);
 				}
 				</style>
-				<br><br><br><br>
-				<div class="cht2"id="charts"></div>
-				<br><br><h4 style="text-align: center; color: #1d3056"> Total No. Of Users Login Today :
+				<br><br>
 ';
 
 //cod for retrieving chart data
 $r0 = "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));";
-$r1= "SELECT LOGINTIME, COUNT(USER_ID) FROM user_log WHERE DATE(LOGINTIME)>= CURDATE() - INTERVAL 7 DAY  GROUP BY DATE(LOGINTIME);";
-$r2 = "SELECT COUNT(USER_ID) FROM user_log WHERE DATE(LOGINTIME)=CURDATE()";
-$r3 = "DELETE FROM user_log WHERE LOGINTIME < CURDATE() - INTERVAL 8 DAY";
-$res1=mysqli_query($conn,$r0);
-$res1=mysqli_query($conn,$r1);
-$res2=mysqli_query($conn,$r2);
-$res3=mysqli_query($conn,$r3);
-$row2=mysqli_fetch_array($res2);
-$chart_data='';
-
-while($row=mysqli_fetch_array($res1))
-{
-    $time= strtotime($row['LOGINTIME']);
-    $ct=$row['COUNT(USER_ID)'];
-
-    echo $row2['COUNT(USER_ID)'] .'</h4>';
-
-    $chart_data .="{ date:'".date('d.m.Y',$time)."', user:'".$ct."'},";
-}
+ $r1= "SELECT  COURSE_ID, COUNT(COURSE_ID) FROM course_log GROUP BY COURSE_ID";
+ $r2 = "SELECT COUNT(COURSE_ID) FROM course_log ";
+ $res1=mysqli_query($conn,$r0);
+ $res1=mysqli_query($conn,$r1);
+ $res2=mysqli_query($conn,$r2);
+ $row=mysqli_fetch_array($res2);
+  $chart_data='';
+  $yaxis='';
+ while($row=mysqli_fetch_array($res1))
+ {
+ $ct=$row['COURSE_ID'];
+ $ctr=$row['COUNT(COURSE_ID)'];
+    $chart_data .="$ct,";
+    $yaxis.="$ctr,";
+ }
+ var_export("[$yaxis]", true);
+ var_export("[$chart_data]", true);
 ?>
+<div class="container">
+        <div class="ylabel"><p>Courses</p></div>
+        <canvas id="line-chart" class="canvas"></canvas>
+        <div class= "xlabel">Time</div>
+        </div>
+        <br><br><br><br>
 
+<div class="trend">
+<div class="yaxis"><p>USERS	</p></div>
+<canvas id="myChart" class="canvas" ></canvas><br>
+<div class="xaxis">COURSES</div>
+</div>
+<br><br><br><br>
+        
+
+<style>
+  .canvas{
+	margin-top:4%;
+    height:400px !important;
+	width:600px !important;
+    flex-direction: row ;
+    
+    align-items: flex-start;
+    flex-direction: row;
+    flex-basis:80%;
+  }
+  .trend{
+	margin-left: 335px;
+          height: 67%;	
+          margin-right: 1%;
+            display: flex;
+            flex-wrap: wrap;
+            -webkit-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+            -moz-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+            box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+  }
+.yaxis{
+  padding: 200px 0px;
+  
+  font-size:20px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  flex-basis: 10%;
+ 
+}
+p{
+  transform: rotate(-90deg);
+
+}
+
+.xaxis{
+  
+  
+  width:60%;
+  padding-left:500px;
+  flex-direction: column;
+  font-size:20px;
+ 
+}
+</style>
 <script>
-    new Morris.Line({
-
-        element: 'chart',
-        data: [<?php echo $chart_data;?>],
-        xkey: ['date'],
-        ykeys: ['user'],
-        labels: ['Users'],
-        resize: true,
-        parseTime: false
-
-    });
+var ctx = document.getElementById("myChart");
+var myChart = new Chart(ctx, {
+  
+  type: 'bar',
+  data: {
+    labels: [<?php echo $chart_data;?>],
+    datasets: [{
+		label: '# course',
+      data: [<?php echo $yaxis; ?>],
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(255, 206, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(255, 206, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 159, 64, 0.2)'
+      ],
+      borderColor: [
+        'rgba(255,99,132,1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 206, 86, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)',
+        'rgba(255, 159, 64, 1)',
+        'rgba(255,99,132,1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 206, 86, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)',
+        'rgba(255, 159, 64, 1)'
+      ],
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true,
+	maintainAspectRatio: false,
+	title: {
+                      display: true,
+                      text:'COURSES IN TREND',
+                      fontSize:32,
+                      
+                  },
+    scales: {
+      xAxes: [{
+        ticks: {
+          maxRotation: 90,
+          minRotation: 80
+        }
+      }],
+      yAxes: [{
+        ticks: {
+          beginAtZero: true
+        }
+      }]
+    }
+  }
+});
 </script>
-<!--    <script>
-        new Morris.Line({
-
-            element: 'chart',
-            data: [ /*echo $chart_data;*/?>],
-            xkey: ['date'],
-            ykeys: ['user'],
-            labels: ['Users'],
-            resize: true,
-            parseTime: false
-
-        });
-    </script>-->
+<?php
+$rt0 = "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));";
+$rt1 = "SELECT CTIME, COUNT(DISTINCT USER_ID) FROM course_log WHERE DATE(CTIME)>= CURDATE() - INTERVAL 7 DAY  GROUP BY DATE(CTIME);";
+$rt2 = "SELECT COUNT(DISTINCT USER_ID) FROM course_log WHERE DATE(CTIME)=CURDATE()";
+ $rest1=mysqli_query($conn,$rt0);
+ $rest1=mysqli_query($conn,$rt1);
+ $rest2=mysqli_query($conn,$rt2);
+    
+   $rowt2=mysqli_fetch_array($rest2);
+   $chart_data2='';
+   $logt='';
+      while($rowt=mysqli_fetch_array($rest1))
+     {
+        $timet= strtotime($rowt['CTIME']);
+        $ctt=$rowt['COUNT(DISTINCT USER_ID)'];
+    
+        $logt .= " '".date('d-m-y',$timet)."', ";
+        $chart_data2 .="$ctt,";
+        }             
+      var_export("[$chart_data2]", true);  
+?>
+  
+        <style>
+        .canvas{
+			margin-top:4%;
+   			 height:400px !important;
+			width:500px !important;
+   			 flex-direction: row ;
+			padding-right:0px;
+    		align-items: flex-end;
+    		flex-direction: row;
+    		flex-basis:80%;
+          
+          
+        }
+        
+        .container{
+			margin-right:10%;
+			margin-left: 335px;
+       		height: 67%;	
+            display: flex;
+            flex-wrap: wrap;
+            -webkit-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+            -moz-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+            box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+            
+          
+        }
+        
+        .ylabel{
+        
+			padding: 200px 0px;
+  			font-size:20px;
+			flex-direction: row;
+			flex-wrap: wrap;
+			flex-basis: 10%;
+         
+        }
+        .ylabel p{
+          transform: rotate(-90deg);
+          font-size: 20px;
+        }
+        .xlabel{
+         
+			
+		padding-left:500px;
+		flex-direction: column;
+		font-size:20px;
+        
+        }
+     
+        
+        </style>
+      
+     
+         
+       
+            <script>
+              new Chart(document.getElementById("line-chart"), {
+                   type: "line",
+                   data: {
+                   labels: [<?php echo $logt; ?>],
+                   datasets: [
+                
+                   {
+                      data: [<?php echo $chart_data2;?>],
+                      label: "Course",
+                      borderColor: "#8e5ea2",
+                      backgroundColor: "rgba(54, 162, 235, 0.2)",
+                      fill: true,
+                      
+                   },
+                  ],
+                },
+                options: {
+              responsive: true,
+              maintainAspectRatio: false,
+             
+                    title: {
+                      display: true,
+                      text:' COURSE COMPLETION CHART',
+                      fontSize:32,
+                      
+                  },
+                },
+              });
+            </script>
 
 </body>
 </html>

@@ -29,7 +29,7 @@ echo '
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
 
 <style>
 	*box
@@ -210,61 +210,376 @@ echo'</strong></span><br></h4>
   <a  class="active" href="#" style="text-decoration: none;">Reports</a>
 </div>
 </div>
+<br><br>
 ';
-echo '
-<div id="chart" class="cht" style= "width: 73%; margin-top: 3%"></div>
-<style>
-				.cht{
-					height:350px;
-					width:1000px;
-					margin-left:320px;
-					margin-right:400px;
-				
-					background:white;
-					-webkit-box-shadow: 7px 15px 104px -20px rgba(0,0,0,0.75);
-					-moz-box-shadow: 7px 15px 104px -20px rgba(0,0,0,0.75);
-					box-shadow: 7px 15px 104px -20px rgba(0,0,0,0.75);
-				}
-				</style>
-				<br><br><br><br><br><br><br><br>
-';
-
 //cod for retrieving chart data
 $r0 = "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));";
-$r1= "SELECT LOGINTIME, COUNT(USER_ID) FROM user_log WHERE DATE(LOGINTIME)>= CURDATE() - INTERVAL 7 DAY  GROUP BY DATE(LOGINTIME);";
-$r2 = "SELECT COUNT(USER_ID) FROM user_log WHERE DATE(LOGINTIME)=CURDATE()";
-$r3 = "DELETE FROM user_log WHERE LOGINTIME < CURDATE() - INTERVAL 8 DAY";
+$r1= "SELECT LOGINTIME, COUNT(DISTINCT USER_ID) FROM user_log WHERE DATE(LOGINTIME)>= CURDATE() - INTERVAL 7 DAY  GROUP BY DATE(LOGINTIME);";
+$r2 = "SELECT COUNT(DISTINCT USER_ID) FROM user_log WHERE DATE(LOGINTIME)=CURDATE()";
 $res1=mysqli_query($conn,$r0);
 $res1=mysqli_query($conn,$r1);
 $res2=mysqli_query($conn,$r2);
-$res3=mysqli_query($conn,$r3);
 $row2=mysqli_fetch_array($res2);
 $chart_data='';
-
-while($row=mysqli_fetch_array($res1))
-{
+$log='';
+     while($row=mysqli_fetch_array($res1))
+    {
     $time= strtotime($row['LOGINTIME']);
-    $ct=$row['COUNT(USER_ID)'];
-    $chart_data .="{ date:'".date('d-m-Y',$time)."', user:'".$ct."'},";
-}
+    $ct=$row['COUNT(DISTINCT USER_ID)'];
+
+  
+    $log .= " '".date('d-m-y',$time)."', ";
+    $chart_data .="$ct,";
+    }
+var_export("[$chart_data]", true);
+var_export("[$log]",true);
+
+//retrieving second chart of course completion
+$rt0 = "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));";
+$rt1 = "SELECT CTIME, COUNT(DISTINCT USER_ID) FROM course_log WHERE DATE(CTIME)>= CURDATE() - INTERVAL 7 DAY  GROUP BY DATE(CTIME);";
+$rt2 = "SELECT COUNT(DISTINCT USER_ID) FROM course_log WHERE DATE(CTIME)=CURDATE()";
+
+$rest1=mysqli_query($conn,$rt0);
+$rest1=mysqli_query($conn,$rt1);
+$rest2=mysqli_query($conn,$rt2);
+
+$rowt2=mysqli_fetch_array($rest2);
+$chart_data2='';
+$logt='';
+    while($rowt=mysqli_fetch_array($rest1))
+    {
+    $timet= strtotime($rowt['CTIME']);
+    $ctt=$rowt['COUNT(DISTINCT USER_ID)'];
+
+    $logt .= " '".date('d-m-y',$timet)."', ";
+    $chart_data2 .="$ctt,";
+    }
+    
+    
+  var_export("[$chart_data2]", true);
+  //retrieving data for trend chart
+
+
+  $tr0 = "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));";
+ $tr1= "SELECT  COURSE_ID, COUNT(COURSE_ID) FROM course_log GROUP BY COURSE_ID";
+ $tr2 = "SELECT COUNT(COURSE_ID) FROM course_log ";
+ $tres1=mysqli_query($conn,$tr0);
+ $tres1=mysqli_query($conn,$tr1);
+ $tres2=mysqli_query($conn,$tr2);
+ $trow=mysqli_fetch_array($tres2);
+  $chart_data3='';
+  $yaxis='';
+ while($trow=mysqli_fetch_array($tres1))
+ {
+ $tct=$trow['COURSE_ID'];
+ $tctr=$trow['COUNT(COURSE_ID)'];
+    $chart_data3 .="$tct,";
+    $yaxis.="$tctr,";
+ }
+ var_export("[$yaxis]", true);
+ var_export("[$chart_data3]", true);
 ?>
 
+<div class="container">
+  <div class="ylabel"><p>USERS AND COURSES</p></div>
+  <canvas id="line-chart" class="canvas"></canvas>
+  <div class= "xlabel">TIME</div>
+  </div>
+  <br><br>  
+  <div class="cont">
+  <div class="ylabel"><p>COURSES</p></div>
+  <canvas id="line" class="canvas"></canvas>
+  <div class= "xlabel">TIME</div>
+  </div>
+  <br><br>  
+  <div class="ulog">
+  <div class="ylabel"><p>COURSES</p></div>
+  <canvas id="linelogin" class="canvas"></canvas>
+  <div class= "xlabel">TIME</div>
+  </div>
+  <br><br>
+  <div class="trend">
+  <div class="yaxis"><p>USERS	</p></div>
+  <canvas id="myChart" class="canvas" ></canvas><br>
+  <div class="xaxis">COURSES</div>
+  </div>
+
+ <style>
+ .trend{
+  margin-left: 335px;
+          height: 67%;	
+          margin-right: 5%;
+            display: flex;
+            flex-wrap: wrap;
+            -webkit-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+-moz-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+
+
+ }
+ .yaxis{
+  padding: 200px 0px;
+  
+  font-size:20px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  flex-basis: 10%;
+ 
+}
+.yaxis p{
+  transform: rotate(-90deg);
+    font-size: 20px;
+}
+
+.xaxis{
+  
+  
+  width:60%;
+  padding-left:500px;
+  flex-direction: column;
+  font-size:20px;
+ 
+}
+  .canvas{
+    height:400px !important;
+      width:600px !important;
+      flex-direction: row ;
+      margin-top:2%;
+      align-items: flex-start;
+      flex-direction: row;
+      flex-basis:80%;
+    
+    
+  }
+  
+  .container{
+    margin-left: 335px;
+          height: 67%;	
+          margin-right: 5%;
+            display: flex;
+            flex-wrap: wrap;
+            -webkit-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+-moz-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+      
+    
+  }
+  .cont{
+    margin-left: 335px;
+          height: 67%;	
+          margin-right: 5%;
+            display: flex;
+            flex-wrap: wrap;
+            -webkit-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+-moz-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+      
+  }
+  .ylabel{
+  
+   padding: 190px 0px;
+   
+   flex-direction: column;
+   padding-bottom:40px;
+   flex-basis: 15%;
+  flex-wrap: wrap; 
+   
+  }
+  .ylabel p{
+    transform: rotate(-90deg);
+    font-size: 20px;
+  }
+  .xlabel{
+   
+    flex-direction: column;
+    justify-content:flex-end;
+    flex:3;
+    align-self:flex-end;
+    margin-right:;
+    padding-left:70px;
+   text-align:center;
+   font-size: 20px;	
+   margin-bottom:1%;
+  
+  }
+ .ulog{
+  margin-left: 335px;
+          height: 67%;	
+          margin-right: 5%;
+            display: flex;
+            flex-wrap: wrap;
+            -webkit-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+-moz-box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+box-shadow: -4px -16px 129px -30px rgba(0,0,0,0.75);
+ }
+  
+  </style>
+  <script>
+              new Chart(document.getElementById("line-chart"), {
+                   type: "line",
+                   data: {
+                   labels: [<?php echo $log; ?>],
+                   datasets: [
+                   {
+                      data: [<?php echo $chart_data2;?>],
+                      label: "Courses",
+                      borderColor: "#90774f",
+                      backgroundColor: "hsla(37, 97%, 50%, 0.52)",
+                      showLine: true,
+                      fill: true,
+                      order: 2,
+                   },
+                   {
+                      data: [<?php echo $chart_data;?>],
+                      label: "Users",
+                      borderColor: "#1d3056",
+                      backgroundColor: "hsla(220, 77%, 53%, 0.48)",
+                      fill: true,
+                      order: 1,
+                   },
+                  ],
+                },
+                options: {
+              responsive: true,
+              maintainAspectRatio: false,
+                    title: {
+                      display: true,
+                      text: 'Total Login and Course Completed',
+                      fontSize: 32,
+                  },
+                },
+              });
+            </script>
+
 <script>
-    new Morris.Line({
+              new Chart(document.getElementById("line"), {
+                   type: "line",
+                   data: {
+                   labels: [<?php echo $log; ?>],
+                   datasets: [
+                   {
+                      data: [<?php echo $chart_data2;?>],
+                      label: "Courses",
+                      borderColor: "#90774f",
+                      backgroundColor: "rgba(255, 206, 86, 0.2)",
+                      showLine: true,
+                      fill: true,
+                   
+                   },
 
-        element: 'chart',
-        data: [<?php echo $chart_data;?>],
-        xkey: ['date'],
-        ykeys: ['user'],
-        labels: ['Users',],
-        lineColors: ['#90774f'],
-        pointFillColors: ['#90774f'],
-        gridTextColor: ['#1d3056'],
-        gridTextWeight: ['bold'],
-        resize: true,
-        parseTime: false
+                  ],
+                },
+                options: {
+              responsive: true,
+              maintainAspectRatio: false,
+                    title: {
+                      display: true,
+                      text: ' COURSE COMPLETION',
+                      fontSize: 32,
+                  },
+                },
+              });
+            </script>
 
-    });
+<script>
+              new Chart(document.getElementById("linelogin"), {
+                   type: "line",
+                   data: {
+                   labels: [<?php echo $log; ?>],
+                   datasets: [
+                   {
+                      data: [<?php echo $chart_data;?>],
+                      label: "Users",
+                      borderColor: "#90774f",
+                      backgroundColor: "rgba(255, 99, 132, 0.2)",
+                      showLine: true,
+                      fill: true,
+                   
+                   },
+
+                  ],
+                },
+                options: {
+              responsive: true,
+              maintainAspectRatio: false,
+                    title: {
+                      display: true,
+                      text: ' USER LOGIN',
+                      fontSize: 32,
+                  },
+                },
+              });
+            </script>
+
+<script>
+var ctx = document.getElementById("myChart");
+var myChart = new Chart(ctx, {
+  
+  type: 'bar',
+  data: {
+    labels: [<?php echo $chart_data3;?>],
+    datasets: [{
+		label: '# course',
+      data: [<?php echo $yaxis; ?>],
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(255, 206, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(255, 206, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 159, 64, 0.2)'
+      ],
+      borderColor: [
+        'rgba(255,99,132,1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 206, 86, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)',
+        'rgba(255, 159, 64, 1)',
+        'rgba(255,99,132,1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 206, 86, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)',
+        'rgba(255, 159, 64, 1)'
+      ],
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true,
+	maintainAspectRatio: false,
+	title: {
+                      display: true,
+                      text:'COURSES IN TREND',
+                      fontSize:32,
+                      
+                  },
+    scales: {
+      xAxes: [{
+        ticks: {
+          maxRotation: 90,
+          minRotation: 80
+        }
+      }],
+      yAxes: [{
+        ticks: {
+          beginAtZero: true
+        }
+      }]
+    }
+  }
+});
 </script>
+
+
+
+
 </body>
 </html>
