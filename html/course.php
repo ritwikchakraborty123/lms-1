@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 include 'db_config.php';
 session_start();
@@ -251,7 +251,7 @@ echo '
 			              echo '<div class="column">	<div class="card">
 											<img src="'.$row['COURSE_IMG'].'" width="200px" height="150px">
 									  <p> ' . $row['COURSE_NAME'].'<br> Duration - '. $row['COURSE_DURATION'].' Mins</p>
-								  <a href="courses.php?link='.$row['COURSE_ID'].'" class="buttonm">Start Course</a>
+								  <a href="modules.php?link='.$row['COURSE_ID'].'" class="buttonm">Start Course</a>
 									</div></div>';
 			            }
 			          }
